@@ -1,4 +1,4 @@
-global xypathspeed = 15000
+global xypathspeed = 3000
 
 MkCrv(N)=begin
   c = Any[]
@@ -125,8 +125,9 @@ function DrawPath(c::Curves, NewFileName::AbstractString; sortcurves = true)
   DrawSVGCurves(NewFileNameSVG, crvs)
 end
 
-pendrop() = "G1 Z40.0 F2500.0 "
-penlift() = "G1 Z-40.0 F2500.0 "
+zinc = 60::Int
+pendrop() = string("G1 Z",zinc,".0 F2500.0 ")
+penlift() = string("G1 Z-",zinc,".0 F2500.0 ")
 
 
 function DrawPath{T<:Number}( c::Array{Array{T,2},1}, NewFileName::AbstractString )

@@ -88,7 +88,7 @@ end
 
 function MakeSVGCurve(c::Union{Curve,ClosedCurve},sw::Number=2,clr=[0,0,0])
   if typeof(c)==ClosedCurve
-    c = closed2curve(c)
+    c = Curve(c)
   end
   txt = "<polyline points=\""
   for p in c
@@ -98,7 +98,7 @@ function MakeSVGCurve(c::Union{Curve,ClosedCurve},sw::Number=2,clr=[0,0,0])
 end
 
 function MakeSVGCurve(c::ClosedCurve)
-  txt = MakeSVGCurve(closed2curve(c))
+  txt = MakeSVGCurve(Curve(c))
 end
 
 function DrawSVGCurves(NewFile,c::Curve)
