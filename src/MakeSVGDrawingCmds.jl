@@ -3,7 +3,9 @@ using PointsNCurves
 
 dir = pwd()
 pkgdir = Pkg.dir()
-#cd(WD)
+
+svgscl = 700
+
 #println("Made it this far!")
 function rgbconv(rgb)
   # rgb should be a vector of values between 0 and 1
@@ -112,21 +114,29 @@ function DrawSVGCurves(NewFile,c::ClosedCurve)
 end
 
 
-function DrawSVGCurves(NewFile,c::ClosedCurves)
-  # C=Curves()
-  # for cc in c
-  #   push!(C,cc.vertices)
-  # end
-  txt = DrawSVGCurves(NewFile,map(cc->Curve(cc),c))
-  return txt
-end
+# function DrawSVGCurves(NewFile,c::ClosedCurves)
+#   # C=Curves()
+#   # for cc in c
+#   #   push!(C,cc.vertices)
+#   # end
+#   txt = DrawSVGCurves(NewFile,map(cc->Curve(cc),c))
+#   return txt
+# end
 
-function DrawSVGCurves(NewFile,crvs::Curves)
+function DrawSVGCurves(NewFile, crvs::Union{Curves,ClosedCurves})
   println("Drawing $(length(crvs)) curves!")
+  
+  (mx, Mx) = (minx(crvs), maxx(crvs))
+  (my, My) = (miny(crvs), maxy(crvs))
+  cent = .5 * Point(mx + Mx, my + My)
+  crvscl = max(Mx - mx, My - my)
+  scl = svgscl/crvscl
+  
   txt = ""
   for c in crvs
     if length(c)>0
-      txtc = MakeSVGCurve(c)
+      ctrans = scl * (c + (-1) * cent)  
+      txtc = MakeSVGCurve(ctrans)
       txt = string(txt,"\n",txtc)
     end
   end

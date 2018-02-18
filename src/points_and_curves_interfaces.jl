@@ -158,7 +158,7 @@ end
 # Base.convert(Type{T>:ClosedCurve}, crv::PointsNCurves.ClosedCurve)
 
 function curves2array(crvs::Curves)
-  arr = Any[]
+  arr = Array{Array{Float64, 2},1}()
   for c in crvs
     push!(arr,hcat(x(c),y(c)))
   end

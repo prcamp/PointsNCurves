@@ -30,12 +30,15 @@ export Point,
        gentestsquare,
        gensquare,
        boxit,
-       occlude_sequence,
+       orientation,
        mask_sequence,
+       occlude_sequence,
        masked_occluded,
        inshape,
        strictlyinshape,
+       mightintersect,
        segmentintersect,
+       onsegment,
        rgbconv,
        MakeSVGShape,
        MakeSVGCirc,
@@ -45,10 +48,21 @@ export Point,
        MakeSVGFileCentered,
        simplerecursor,
        trnsfrm1,
-       combinator1
+       combinator1,
+       simplerecursor2,
+       trnsfrm2,
+       combinator2,
+       whichInterval,
+       GroupCurvesBy,
+       SortCurvesForDrawing,
+       DrawPath
+
+
+
 
 include("points_and_curves_interfaces.jl")
 include("points_and_curves_utils.jl")
 include("p&c_recursors.jl")
 include("MakeSVGDrawingCmds.jl")
+include("XYPlotterFcnsfor3.0.jl")
 end
