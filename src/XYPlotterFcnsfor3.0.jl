@@ -125,6 +125,10 @@ function DrawPath(c::Curves, NewFileName::AbstractString; sortcurves = true)
   DrawSVGCurves(NewFileNameSVG, crvs)
 end
 
+pendrop() = "G1 Z40.0 F2500.0 "
+penlift() = "G1 Z-40.0 F2500.0 "
+
+
 function DrawPath{T<:Number}( c::Array{Array{T,2},1}, NewFileName::AbstractString )
   # c is a vector of nx2 paths, nx2xNumPaths
   # For example: see MkCrv.
@@ -142,11 +146,11 @@ function DrawPath{T<:Number}( c::Array{Array{T,2},1}, NewFileName::AbstractStrin
   push!(Txt,"G91") # sets to relative positioning
   push!(Txt,string("G1 X",c[1][1,1]," Y",c[1][1,2]," F$(xypathspeed) "))
   for i in 1:NPaths
-    push!( Txt, "G1 Z40.0 F2500.0 ")
+    push!( Txt, pendrop())
     for j in 1:size(Dirs[i])[1]
       push!( Txt, string("G1 X",Dirs[i][j,1]," Y",Dirs[i][j,2]," F$(xypathspeed)"))
     end
-    push!( Txt, "G1 Z-40.0 F2500.0 ")
+    push!( Txt, penlift())
     if i < NPaths
         push!(Txt,string("G1 X",Transitions[i][1]," Y",Transitions[i][2]," F$(xypathspeed)"))
     end
@@ -198,3 +202,38 @@ function makecncfile( c::Curves, NewFileName )
   close(fn)
 end
 DrawPath( c )=DrawPath( c, "DrawPathTry.cnc" )
+
+function parsecnc(fn::String)::Curves
+  # fn is the filename of that you want to import from
+  f = open(fn, "r")
+  crvs = Curves()
+  crv = Curve()
+  record_flag = false
+  current_point = Point(0,0)
+  for l in readlines(f)
+    if contains(l, "G1 Z")
+      zact = sign(parse(Int,l[5:6]))
+      if zact > 0
+        record_flag = true
+        push!(crv, current_point)
+      else
+        record_flag = false
+        push!(crvs, crv)
+        crv = Curve()
+      end
+    elseif contains(l, "G1 X")
+      l = l[5:end]
+      (xstr,ypart) = split(l, 'Y')
+      (ystr,~) = split(ypart,'F')
+      x = parse(Float64,xstr)
+      y = parse(Float64,ystr)
+      current_point += Point(x, y)
+      if record_flag
+        push!(crv, current_point)
+      end
+    end
+  end
+  push!(crvs, crv)
+  close(f)
+  crvs[1:end-1]
+end

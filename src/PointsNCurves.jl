@@ -55,7 +55,8 @@ export Point,
        whichInterval,
        GroupCurvesBy,
        SortCurvesForDrawing,
-       DrawPath
+       DrawPath,
+       parsecnc
 
 
 
