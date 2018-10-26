@@ -123,6 +123,28 @@ end
 #   return txt
 # end
 
+
+
+function DrawSVGCurvesNoScaling(NewFile, crvs::Union{Curves,ClosedCurves})
+  println("Drawing $(length(crvs)) curves!")
+  
+  # (mx, Mx) = (minx(crvs), maxx(crvs))
+  # (my, My) = (miny(crvs), maxy(crvs))
+  # cent = .5 * Point(mx + Mx, my + My)
+  # crvscl = max(Mx - mx, My - my)
+  # scl = svgscl/crvscl
+  
+  txt = ""
+  for c in crvs
+    if length(c)>0
+      txtc = MakeSVGCurve(c)
+      txt = string(txt,"\n",txtc)
+    end
+  end
+  MakeSVGFileCentered(NewFile,txt)
+  return txt
+end
+
 function DrawSVGCurves(NewFile, crvs::Union{Curves,ClosedCurves})
   println("Drawing $(length(crvs)) curves!")
   

@@ -134,19 +134,32 @@ function masked_occluded(c::Curves,c2::ClosedCurve)
   return masked, occluded
 end
 
+function masked_occluded_intersections(c1::ClosedCurve,c2::ClosedCurve)
+  # Partitions c1 into a set of curves.
+  c1 = Curve(c1)
+  masked_occluded_intersections(c1,c2)
+end
+
+
 function masked_occluded(c1::ClosedCurve,c2::ClosedCurve)
   # Partitions c1 into a set of curves.
   c1 = Curve(c1)
-  m,o = masked_occluded(c1,c2)
+  masked_occluded(c1,c2)
 end
 
 function masked_occluded(c1::Curve,c2::ClosedCurve)
+  m,o,i = masked_occluded_intersections(c1,c2)
+  m,o
+end
+
+function masked_occluded_intersections(c1::Curve,c2::ClosedCurve)
   #=
   c1 will occlude c2, i.e. only the parts of c2 lying outside of c1 will remain
   The result is a set of curves of type Curves.
 
   =#
   #println("masking & occluding...")
+  allintersectionpoints = Point[]
   if length(c1)>1
     const tt = 0.5
     masked = Curves()
@@ -204,6 +217,7 @@ function masked_occluded(c1::Curve,c2::ClosedCurve)
         scale = scale[idx]
         intersectingsegments = intersectingsegments[idx]
         intersectionpoints = intersectionpoints[idx]
+        allintersectionpoints = vcat(allintersectionpoints,intersectionpoints)
         # assuming non overlapping points:
         # first segment:
         if isin
@@ -249,7 +263,7 @@ function masked_occluded(c1::Curve,c2::ClosedCurve)
     masked = Curves()
     occluded = Curves()
   end
-  return masked, occluded
+  return masked, occluded, allintersectionpoints
 end
 
 function simplify(c::ClosedCurve)
