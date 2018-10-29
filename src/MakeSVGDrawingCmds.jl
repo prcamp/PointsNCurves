@@ -6,13 +6,15 @@ pkgdir = Pkg.dir()
 
 svgscl = 700
 
+copy_to_clipboard = false
+
 #println("Made it this far!")
 function rgbconv(rgb)
   # rgb should be a vector of values between 0 and 1
   if rgb[1] <= 1
-    rgb=round(Int,255*rgb)
+    rgb=round.(Int,255*rgb)
   else
-    rgb=round(Int,rgb)
+    rgb=round.(Int,rgb)
   end
   h=""
   for k in 1:3
@@ -190,7 +192,7 @@ function MakeSVGFileCentered(NewFile,TXT)
   txt = string(hdr,"\n",TXT,"\n",ftr)
   filestring=dir*"/"*NewFile
   println("drawing the svg to $filestring")
-  clipboard(filestring)
+  copy_to_clipboard && clipboard(filestring)
   NF=open(filestring,"w")
   write(NF,txt)
   close(NF)
