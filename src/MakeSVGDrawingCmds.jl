@@ -86,6 +86,18 @@ function MakeSVGGradCircs(Cents::Array=[-50 -50;50  50],
   return Txt
 end
 
+function MakeSVGCurve(c::Union{Curve,ClosedCurve},unit::String,sw::Number=2,clr=[0,0,0])
+  if typeof(c)==ClosedCurve
+    c = closed2curve(c)
+  end
+  txt = "<polyline points=\""
+  for p in c
+    txt = string(txt,"$(x(p))$unit,$(-y(p))$unit ")
+  end
+  txt = string(txt,"\" style=\"fill:none;stroke:#$(rgbconv(clr));stroke-width:$sw\" />")
+end
+
+
 function MakeSVGCurve(c::Union{Curve,ClosedCurve},sw::Number=2,clr=[0,0,0])
   if typeof(c)==ClosedCurve
     c = closed2curve(c)
@@ -125,7 +137,7 @@ end
 
 
 
-function DrawSVGCurvesNoScaling(NewFile, crvs::Union{Curves,ClosedCurves})
+function DrawSVGCurvesNoScaling(NewFile, crvs::Union{Curves,ClosedCurves},unit::String)
   println("Drawing $(length(crvs)) curves!")
   
   # (mx, Mx) = (minx(crvs), maxx(crvs))
@@ -137,7 +149,7 @@ function DrawSVGCurvesNoScaling(NewFile, crvs::Union{Curves,ClosedCurves})
   txt = ""
   for c in crvs
     if length(c)>0
-      txtc = MakeSVGCurve(c)
+      txtc = MakeSVGCurve(c,unit)
       txt = string(txt,"\n",txtc)
     end
   end
