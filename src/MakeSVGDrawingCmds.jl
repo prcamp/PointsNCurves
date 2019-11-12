@@ -1,25 +1,22 @@
 #using Color
-using PointsNCurves
-
+# using PointsNCurves
+# using Pkg
 dir = pwd()
-pkgdir = Pkg.dir()
-
-svgscl = 700
-
-copy_to_clipboard = false
-
+pkgdir = "/Users/prc/github" # Pkg.dir()
+#cd(WD)
 #println("Made it this far!")
+
 function rgbconv(rgb)
   # rgb should be a vector of values between 0 and 1
   if rgb[1] <= 1
-    rgb=round.(Int,255*rgb)
+    rgb=map(t -> round(Int,255*t),rgb)
   else
-    rgb=round.(Int,rgb)
+    rgb=round(Int,rgb)
   end
   h=""
   for k in 1:3
     #println(k)
-    hk=hex(rgb[k])
+    hk = string(rgb[k], base = 16)
     if length(hk)==1
       hk="0"*hk
     end
@@ -30,7 +27,7 @@ end
 #println("rgbconv done")
 
 function MakeSVGShape(c::Curve,clr,sclr)
-  const sw = .3
+  sw = .3
   txt = "<polyline points=\""
   for p in c
     txt = string(txt,"$(x(p)),$(-y(p)) ")
@@ -88,18 +85,6 @@ function MakeSVGGradCircs(Cents::Array=[-50 -50;50  50],
   return Txt
 end
 
-function MakeSVGCurve(c::Union{Curve,ClosedCurve},unit::String,sw::Number=2,clr=[0,0,0])
-  if typeof(c)==ClosedCurve
-    c = closed2curve(c)
-  end
-  txt = "<polyline points=\""
-  for p in c
-    txt = string(txt,"$(x(p))$unit,$(-y(p))$unit ")
-  end
-  txt = string(txt,"\" style=\"fill:none;stroke:#$(rgbconv(clr));stroke-width:$sw\" />")
-end
-
-
 function MakeSVGCurve(c::Union{Curve,ClosedCurve},sw::Number=2,clr=[0,0,0])
   if typeof(c)==ClosedCurve
     c = closed2curve(c)
@@ -128,51 +113,21 @@ function DrawSVGCurves(NewFile,c::ClosedCurve)
 end
 
 
-# function DrawSVGCurves(NewFile,c::ClosedCurves)
-#   # C=Curves()
-#   # for cc in c
-#   #   push!(C,cc.vertices)
-#   # end
-#   txt = DrawSVGCurves(NewFile,map(cc->Curve(cc),c))
-#   return txt
-# end
-
-
-
-function DrawSVGCurvesNoScaling(NewFile, crvs::Union{Curves,ClosedCurves},unit::String)
-  println("Drawing $(length(crvs)) curves!")
-  
-  # (mx, Mx) = (minx(crvs), maxx(crvs))
-  # (my, My) = (miny(crvs), maxy(crvs))
-  # cent = .5 * Point(mx + Mx, my + My)
-  # crvscl = max(Mx - mx, My - my)
-  # scl = svgscl/crvscl
-  
-  txt = ""
-  for c in crvs
-    if length(c)>0
-      txtc = MakeSVGCurve(c,unit)
-      txt = string(txt,"\n",txtc)
-    end
-  end
-  MakeSVGFileCentered(NewFile,txt)
+function DrawSVGCurves(NewFile,c::ClosedCurves)
+  # C=Curves()
+  # for cc in c
+  #   push!(C,cc.vertices)
+  # end
+  txt = DrawSVGCurves(NewFile,map(cc->Curve(cc),c))
   return txt
 end
 
-function DrawSVGCurves(NewFile, crvs::Union{Curves,ClosedCurves})
+function DrawSVGCurves(NewFile,crvs::Curves)
   println("Drawing $(length(crvs)) curves!")
-  
-  (mx, Mx) = (minx(crvs), maxx(crvs))
-  (my, My) = (miny(crvs), maxy(crvs))
-  cent = .5 * Point(mx + Mx, my + My)
-  crvscl = max(Mx - mx, My - my)
-  scl = svgscl/crvscl
-  
   txt = ""
   for c in crvs
     if length(c)>0
-      ctrans = scl * (c + (-1) * cent)  
-      txtc = MakeSVGCurve(ctrans)
+      txtc = MakeSVGCurve(c)
       txt = string(txt,"\n",txtc)
     end
   end
@@ -192,7 +147,7 @@ function MakeSVGFileCentered(NewFile,TXT)
   txt = string(hdr,"\n",TXT,"\n",ftr)
   filestring=dir*"/"*NewFile
   println("drawing the svg to $filestring")
-  copy_to_clipboard && clipboard(filestring)
+  clipboard(filestring)
   NF=open(filestring,"w")
   write(NF,txt)
   close(NF)

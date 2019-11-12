@@ -1,3 +1,4 @@
+using LinearAlgebra
 
 function boxit(crv::Curve,wbuff::Number,dbuff::Number)
   if x(crv[end]) < x(crv[1])
@@ -12,6 +13,21 @@ function boxit(crv::Curve,wbuff::Number,dbuff::Number)
   push!(crv,p3)
   push!(crv,p4)
   ClosedCurve(crv)
+end
+
+function occlude_sequence(crvs::ClosedCurves)
+    # mask from front to back
+    n = length(crvs)
+    ncrvs = Curves()
+    ocrvs = crvs
+    push!(ncrvs,Curve(crvs[1]))
+    for k in 2:n
+      ncrv = Curve(crvs[k])
+      o = reverse(ocrvs[1:k-1])
+      ncrv = occlude_sequence(ncrv,o)
+      ncrvs = vcat(ncrvs,ncrv)
+    end
+    return ncrvs
 end
 
 function occlude_sequence(crvs::Curves)
@@ -134,34 +150,21 @@ function masked_occluded(c::Curves,c2::ClosedCurve)
   return masked, occluded
 end
 
-function masked_occluded_intersections(c1::ClosedCurve,c2::ClosedCurve)
-  # Partitions c1 into a set of curves.
-  c1 = Curve(c1)
-  masked_occluded_intersections(c1,c2)
-end
-
-
 function masked_occluded(c1::ClosedCurve,c2::ClosedCurve)
   # Partitions c1 into a set of curves.
   c1 = Curve(c1)
-  masked_occluded(c1,c2)
+  m,o = masked_occluded(c1,c2)
 end
 
 function masked_occluded(c1::Curve,c2::ClosedCurve)
-  m,o,i = masked_occluded_intersections(c1,c2)
-  m,o
-end
-
-function masked_occluded_intersections(c1::Curve,c2::ClosedCurve)
   #=
   c1 will occlude c2, i.e. only the parts of c2 lying outside of c1 will remain
   The result is a set of curves of type Curves.
 
   =#
   #println("masking & occluding...")
-  allintersectionpoints = Point[]
   if length(c1)>1
-    const tt = 0.5
+    tt = 0.5
     masked = Curves()
     occluded = Curves()
 
@@ -217,7 +220,6 @@ function masked_occluded_intersections(c1::Curve,c2::ClosedCurve)
         scale = scale[idx]
         intersectingsegments = intersectingsegments[idx]
         intersectionpoints = intersectionpoints[idx]
-        allintersectionpoints = vcat(allintersectionpoints,intersectionpoints)
         # assuming non overlapping points:
         # first segment:
         if isin
@@ -263,12 +265,12 @@ function masked_occluded_intersections(c1::Curve,c2::ClosedCurve)
     masked = Curves()
     occluded = Curves()
   end
-  return masked, occluded, allintersectionpoints
+  return masked, occluded
 end
 
 function simplify(c::ClosedCurve)
   # return a curve with no self intersections with outer boundary same as c
-  const t = .99
+  t = .99
   splfd = Curve()
   interiorinds = strictlyinshape(c)
   outinds = setdiff(1:c.length,interiorinds)
@@ -755,4 +757,19 @@ end
 #    t = 0
 # end
 #    return doesintersect,p,s,t
+# end
+
+
+struct CurveGraph
+    curves::Curves
+    intersection_points::Vector{Point}
+    neighbors::Dict{Int,Vector{Int}}
+    edges::Dict{Tuple{Int,Int},Tuple{Int,Tuple{Int,Int}}}
+    CurveGraph(crvs::Curves) = curve2curvegraph(crvs)
+end
+
+# First let's assume that no more than two curves intersect at a point, and that
+# they always intersect in the middle of segments:
+# function curve2curvegraph(crvs::Curves)
+#
 # end

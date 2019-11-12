@@ -1,8 +1,10 @@
-import Base.+, Base.*,Base.getindex,Base.convert,Base.norm
+import Base.+, Base.*,Base.getindex,Base.convert,
+    Base.iterate,Base.setindex!, Base.firstindex,
+    Base.lastindex
 
 const P = Float64
 
-type Point # {T}
+struct Point # {T}
    x::P #T
    y::P #T
    Point(x::Number,y::Number)=new(convert(P,x),convert(P,y))
@@ -10,7 +12,7 @@ end
 
 Base.isequal(p1::Point,p2::Point) = (p1.x==p2.x)&&(p1.y==p2.y)
 norm(p::Point) = sqrt(p.x^2+p.y^2)
-type Polar
+struct Polar
   r::P
   θ::P
 end
@@ -34,34 +36,52 @@ polar(p::Point=Point(1,0);center::Point=Point(0.0)) = Polar(p-center)
 
 Point(rt::Polar) = rt.r*Point(cos(rt.theta),sin(rt.theta))
 
-type Segment
+struct Segment
    s::Point
    t::Point
 end
 
 # type ArcInstruct
+# struct ArcInstruct
 #   params::Vector{AbstractString}
 #   code
 # end
 # type XYArc
+# struct XYArc
 #   center::Point
 #   θ0::Number
 #   θ1::Number
 # end
 
-# type Curve
-#    vertices::Vector{Point}
-#    Curve(v::Vector{Point},n::Int) = new(v,n)
-#    Curve(v::Vector{Point}) = new(v,length(v))
-# end
 const Curve = Vector{Point}
+
+function Curve(c::Array{Float64,2})
+        crv = Curve()
+        for i in 1:length(c)
+            push!(crv, Point(c[i,1],c[i,2]) )
+        end
+        return crv::Curve
+    end
+
+function Curve(c::Array{Int,2})
+        crv = Curve()
+        for i in 1:size(c)[1]
+            push!(crv, Point(c[i,1],c[i,2]) )
+        end
+        return new(crv)
+    end
+
+function Curve(c::ClosedCurve)
+    c.vertices::Curve
+end
+
 const Curves = Vector{Curve}
 
 #= the vertices are indexed from 0 to length-1,
    so curve[length]=curve[0]
    this is the only logical thing to do.
 =#
-type ClosedCurve
+struct ClosedCurve
    vertices::Vector{Point}
    length::Int
    ClosedCurve(v::Vector{Point},n::Int) = new(v,n)
@@ -70,17 +90,27 @@ end
 const ClosedCurves = Vector{ClosedCurve}
 
 # Methods:
-Base.start(::ClosedCurve) = 1
-Base.next(c::ClosedCurve,state) = (c.vertices[state],state+1)
-Base.done(c::ClosedCurve, s) = s > c.length
-Base.eltype(::Type{ClosedCurve}) = Int
+Base.iterate(c::ClosedCurve,state=0) =
+  if state > c.length
+      return nothing
+  elseif state == 0
+      return (c.vertices[1], 1)
+  elseif state == c.length
+      return (c.vertices[1], c.length+1)
+  else
+      return (c.vertices[state+1],state+1)
+  end
+Base.eltype(::Type{ClosedCurve}) = Point
 Base.length(c::ClosedCurve) = c.length
-
+Base.firstindex(c::ClosedCurve) = 0
+Base.lastindex(c::ClosedCurve) = c.length - 1
 Base.insert!(c::ClosedCurve,idx::Int,p::Point) = begin
-  c = closed2curve(c)
+  c = Curve(c)
   insert!(c,idx+1,p)
   ClosedCurve(c[1:end-1])
 end
+
+
 
 function cleancurve(crvs::Curves)
   ncrvs = Curves()
@@ -119,19 +149,13 @@ function Base.getindex(c::ClosedCurve, I)
       return Segment(c[I[1]],c[I[2]])
    end
 end
-Base.mean(c::ClosedCurve) = Point(mean(x(c)),mean(y(c)))
-Base.find(f::Function,c::ClosedCurve) = Base.find(f,c.vertices)
+mean(x::Vector{Float64}) = sum(x)/length(x)
+mean(c::ClosedCurve) = Point(mean(x(c)),mean(y(c)))
+import Base.size
+Base.size(c::ClosedCurve) = (c.length,)
 # Base.setindex
 # Base.endof
 
-function curve(c::Array{P,2})
-   # convert a n x 2 array into a curve
-   crv = Point[]
-   for i in 1:size(c)[1]
-      push!(crv, Point(c[i,1],c[i,2]) )
-   end
-   return Curve(crv)
-end
 
 function closedcurve(c::Array{P,2})
    # convert a n x 2 array into a curve
@@ -142,23 +166,14 @@ function closedcurve(c::Array{P,2})
    return ClosedCurve(crv)
 end
 
-# function closed2curve(c::ClosedCurve)
-#   crv = Point[]
-#   for i in 0:c.length
-#     push!(crv,c[i])
-#   end
-#   return crv
-# end
-
-function Base.convert(::Type{Curve}, crv::ClosedCurve) 
+function Base.convert(::Type{Curve}, crv::ClosedCurve)
   c = crv.vertices
   (!isequal(c[end],c[1])) && (push!(c,c[1]))
   return c
 end
-# Base.convert(Type{T>:ClosedCurve}, crv::PointsNCurves.ClosedCurve)
 
 function curves2array(crvs::Curves)
-  arr = Array{Array{Float64, 2},1}()
+  arr = Any[]
   for c in crvs
     push!(arr,hcat(x(c),y(c)))
   end
@@ -196,6 +211,10 @@ minx(c::ClosedCurve) = minimum(x(c))#mapreduce(x,min,c)
 maxx(c::ClosedCurve) = maximum(x(c))#mapreduce(x,max,c)
 miny(c::ClosedCurve) = minimum(y(c))#mapreduce(y,min,c)
 maxy(c::ClosedCurve) = maximum(y(c))#mapreduce(y,max,c)
+minx(crvs::ClosedCurves) = mapreduce(c->minx(c),min,crvs)
+maxx(crvs::ClosedCurves) = mapreduce(c->maxx(c),max,crvs)
+miny(crvs::ClosedCurves) = mapreduce(c->miny(c),min,crvs)
+maxy(crvs::ClosedCurves) = mapreduce(c->maxy(c),max,crvs)
 minx(s::Segment) = minimum(x(s))
 miny(s::Segment) = minimum(y(s))
 maxx(s::Segment) = maximum(x(s))
@@ -248,8 +267,8 @@ end
 function *(a::Number,s::Segment)
   p = (1-a)*s.s + a*s.t
 end
-*{T<:Number}(A::Array{T,2},p::Point) = Point((A*point2vec(p))...)
-function *{T<:Number}(A::Array{T,2},c::Union{Curve,ClosedCurve})
+*(A::Array{T,2},p::Point) where T <: Number = Point((A*point2vec(p))...)
+function *(A::Array{T,2},c::Union{Curve,ClosedCurve}) where T <: Number
   Tp = typeof(c)
   crv = Curve()
   for p in c
@@ -257,7 +276,7 @@ function *{T<:Number}(A::Array{T,2},c::Union{Curve,ClosedCurve})
   end
   return Tp(crv)
 end
-function *{T<:Number}(A::Array{T,2},c::Union{Curves,ClosedCurves})
+function *(A::Array{T,2},c::Union{Curves,ClosedCurves}) where T <: Number
   crvs = similar(c)
   for (i,crv) in enumerate(c)
     crvs[i]=A*crv
@@ -281,27 +300,29 @@ function genrandcrv(n::Int = 25)
 end
 
 function genrandcirc(n::Int = 10)
-   theta = collect(linspace(0,2*pi,n+1)[1:n])+2*pi*rand()
+   theta = collect(range(0,2*pi;length=n+1)[1:n]).+2*pi*rand()
    scl = 2*rand()
-   x = cos(theta)
-   y = sin(theta)
+   x = cos.(theta)
+   y = sin.(theta)
    crv = hcat(x,y)
    crv = closedcurve(crv)
    crv = scl*crv + genrandpoint()
 end
 
 function gencirc(n::Int=10)
-   theta = collect(linspace(0,2*pi,n+1)[1:n])+2*pi*rand()
-   x = cos(theta)
-   y = sin(theta)
+   theta = collect(range(0,2*pi;length=n+1)[1:n]).+2*pi*rand()
+   x = cos.(theta)
+   y = sin.(theta)
    crv = closedcurve(hcat(x,y))
 end
 
-function genstar()
-  theta = collect(linspace(0,2*pi,6)[1:5])+2*pi*rand()
-  theta = theta[[1,3,5,2,4]]
-  x = cos(theta)
-  y = sin(theta)
+function genstar(n,theta0 = 2*pi*rand())
+  theta = collect(range(0,2*pi;length=n+1)[1:n]).+theta0
+  halfind = round(Int,ceil(n/2))
+  inds = vcat(2*(1:halfind).-1,2*(1:halfind-1))
+  theta = theta[inds]
+  x = cos.(theta)
+  y = sin.(theta)
   crv = closedcurve(hcat(x,y))
 end
 
@@ -324,3 +345,5 @@ function gentestsquare()
   push!(crv,Point(0.75,0))
   crv = ClosedCurve(crv)
 end
+
+linspace(a,b,n) = range(a,b; length = n)
