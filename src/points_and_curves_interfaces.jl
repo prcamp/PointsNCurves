@@ -55,6 +55,30 @@ end
 
 const Curve = Vector{Point}
 
+#= the vertices are indexed from 0 to length-1,
+   so curve[length]=curve[0]
+   this is the only logical thing to do.
+=#
+struct ClosedCurve
+   vertices::Vector{Point}
+   length::Int
+   ClosedCurve() = new(Vector{Point}(),0)
+   ClosedCurve(v::Vector{Point},n::Int) = new(v,n)
+   ClosedCurve(v::Vector{Point}) = begin
+       if !isempty(v)
+           if v[1] == v[end]
+               return ClosedCurve(v[1:end-1])
+           else
+               return new(v,length(v))
+           end
+       else
+           return ClosedCurve()
+       end
+   end
+end
+
+const ClosedCurves = Vector{ClosedCurve}
+
 function Curve(c::Array{Float64,2})
         crv = Curve()
         for i in 1:length(c)
@@ -72,22 +96,15 @@ function Curve(c::Array{Int,2})
     end
 
 function Curve(c::ClosedCurve)
-    c.vertices::Curve
+    verts = c.vertices::Curve
+    if verts[1] == verts[end]
+        return verts
+    else
+        return [verts..., verts[1]]
+    end
 end
 
 const Curves = Vector{Curve}
-
-#= the vertices are indexed from 0 to length-1,
-   so curve[length]=curve[0]
-   this is the only logical thing to do.
-=#
-struct ClosedCurve
-   vertices::Vector{Point}
-   length::Int
-   ClosedCurve(v::Vector{Point},n::Int) = new(v,n)
-   ClosedCurve(v::Vector{Point}) = new(v,length(v))
-end
-const ClosedCurves = Vector{ClosedCurve}
 
 # Methods:
 Base.iterate(c::ClosedCurve,state=0) =
@@ -316,7 +333,7 @@ function gencirc(n::Int=10)
    crv = closedcurve(hcat(x,y))
 end
 
-function genstar(n,theta0 = 2*pi*rand())
+function genstar(n=5,theta0 = 2*pi*rand())
   theta = collect(range(0,2*pi;length=n+1)[1:n]).+theta0
   halfind = round(Int,ceil(n/2))
   inds = vcat(2*(1:halfind).-1,2*(1:halfind-1))

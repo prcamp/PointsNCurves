@@ -190,7 +190,7 @@ function masked_occluded(c1::Curve,c2::ClosedCurve)
         push!(occluded,Curve())
       end
 
-      #println("they might intersect...")
+#println("they might intersect...")
       # numintersects = 0
       for i in 1:length(c1)-1
         s1 = Segment(c1[i],c1[i+1])
@@ -291,11 +291,11 @@ function simplify(c::ClosedCurve)
         s2 = Segment(c[j],c[j+1])
         doesintersect,s,t,r = segmentintersect(s1,s2)
         if doesintersect
-          println("does intersect: \n",
-          "s is $s \n",
-          "t is $t \n",
-          "p is ($(r.x),$(r.y)) \n",
-          )
+          # println("does intersect: \n",
+          # "s is $s \n",
+          # "t is $t \n",
+          # "p is ($(r.x),$(r.y)) \n",
+          # )
           push!(intersectingsegments,j)
           # ignoring double intersections for the moment
           push!(intersectionpoints,r)
@@ -303,7 +303,7 @@ function simplify(c::ClosedCurve)
         end
       end
     end
-    println("now to deal with those intersections...")
+    # println("now to deal with those intersections...")
     inds = sortperm(scale)
     scale = scale[inds]
     intersectingsegments = intersectingsegments[inds]

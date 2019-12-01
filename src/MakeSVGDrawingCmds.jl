@@ -152,3 +152,28 @@ function MakeSVGFileCentered(NewFile,TXT)
   write(NF,txt)
   close(NF)
 end
+
+ispoly(l::String) = l[2:9] == "polyline"
+
+trnsfrm_line = r".*\<g transform=\"matrix\(([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\)"
+istransform(l::Union{SubString,String}) = occursin(trnsfrm_line,l)
+parsetransform(l::Union{SubString,String}) = map(x -> tryparse(Float64,x),match(trnsfrm_line,l).captures)
+affine(vec::Vector{Float64}) = [vec[1] vec[3] vec[5]; vec[2] vec[4] vec[6]; 0 0 1]
+
+apply_affine(a::Array{Float64,2},p::Point) =
+
+function parseSVG(fn::String)::Curves
+  f = open(fn)
+  lines = redlines(f)
+  close(f)
+  c = Curves()
+  transform = LinearAlgebra.I
+  for l in lines
+    if ispoly(l)
+
+    else if istransform(l)
+
+    else if ispath(l)
+
+    end
+end

@@ -1,10 +1,12 @@
-global xypathspeed = 15000
+global xypathspeed = 3000
 
 MkCrv(N)=begin
   c = Any[]
   map(i->push!( c, rand(100,2) ),1:N)
   return c
 end
+
+
 
 function whichInterval(a,b,numSubIntervals,val)
   dt = (b-a)/(numSubIntervals)
