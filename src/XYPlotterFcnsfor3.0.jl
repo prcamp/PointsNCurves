@@ -6,8 +6,6 @@ MkCrv(N)=begin
   return c
 end
 
-
-
 function whichInterval(a,b,numSubIntervals,val)
   dt = (b-a)/(numSubIntervals)
   idx = 1
@@ -31,7 +29,7 @@ function whichInterval(a,b,numSubIntervals,val)
 end
 
 function GroupCurvesBy(meas::Function,crvs::Curves,numSlices::Int=18) #::Vector{Set{Int}}()
-  sortedcurvesindices = Vector{Set{Int}}(numSlices)
+  sortedcurvesindices = Vector{Set{Int}}(undef,numSlices)
   if !isempty(crvs)
     vals = map(meas,crvs)
     M = maximum(vals)
@@ -114,7 +112,7 @@ end
 # end
 
 
-function DrawPath(c::Curves, NewFileName::AbstractString; sortcurves = true)
+function DrawPath(c::Curves, NewFileName::AbstractString; sortcurves = false)
   crvs = c
   if sortcurves
     crvs = SortCurvesForDrawing(c)
@@ -124,14 +122,14 @@ function DrawPath(c::Curves, NewFileName::AbstractString; sortcurves = true)
 
   # Go ahead and make an svg as well:
   NewFileNameSVG = NewFileName[1:end-4]*".svg"
-  DrawSVGCurves(NewFileNameSVG, crvs)
+  DrawSVGCurves(NewFileNameSVG, .5*crvs)
 end
 
 pendrop() = "G1 Z40.0 F2500.0 "
 penlift() = "G1 Z-40.0 F2500.0 "
 
 
-function DrawPath{T<:Number}( c::Array{Array{T,2},1}, NewFileName::AbstractString )
+function DrawPath( c::Array{Array{T,2},1}, NewFileName::AbstractString ) where T <: Number
   # c is a vector of nx2 paths, nx2xNumPaths
   # For example: see MkCrv.
   NPaths = length( c )
@@ -139,7 +137,6 @@ function DrawPath{T<:Number}( c::Array{Array{T,2},1}, NewFileName::AbstractStrin
   Starts = map(i -> c[i][1,:], 1:NPaths)
   Ends = map(i -> c[i][end,:], 1:NPaths)
   Transitions=map(i -> Starts[i+1]-Ends[i],1:NPaths-1)
-  @show size(Transitions[1])
   if length(c)>1
     push!(Transitions,Starts[1]-Ends[NPaths-1])
   end
@@ -157,7 +154,6 @@ function DrawPath{T<:Number}( c::Array{Array{T,2},1}, NewFileName::AbstractStrin
         push!(Txt,string("G1 X",Transitions[i][1]," Y",Transitions[i][2]," F$(xypathspeed)"))
     end
   end
-  #push!( Txt, "G1 Z-40.0 F2500.0 ")
   fn = open(NewFileName, "w")
   for i in 1:length(Txt)
     write(fn,Txt[i],"\n")
